@@ -1,0 +1,10 @@
+name: BankNote
+main: com.ruinscraft.banknote.BankNote
+version: 0.1
+author: Ruinscraft LLC
+api-version: 1.13
+commands:
+  banknote:
+    description: Shows all commands for BankNote
+    usage: /banknote
+    permission: banknote.general

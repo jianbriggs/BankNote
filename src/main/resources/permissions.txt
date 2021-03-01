@@ -1,0 +1,11 @@
+Permissions for BankNote
+========================
+
+To be filled as needed
+
+All players
+-----------
+banknote.general
+
+Helper, Mod, & Admin
+--------------------
