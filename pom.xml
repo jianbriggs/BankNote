@@ -11,7 +11,7 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <mainClass>com.ruinscraft.banknote.BankNote</mainClass>
+        <mainClass>com.ruinscraft.banknote.BankNotePlugin</mainClass>
         <jar.finalName>${project.name}</jar.finalName>
     </properties>
 

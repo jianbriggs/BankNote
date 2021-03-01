@@ -25,10 +25,7 @@ public class CryptoSecure {
 	private static final int MAX_LENGTH = 240;
 	private static final String ENCODE_DELIMITTER = "!";
 	
-	public static boolean isBankNote(BookMeta meta) {
-		// TODO: write algorithm to check more things besides pages
-		return meta.hasPages() && !meta.getGeneration().equals(Generation.COPY_OF_ORIGINAL) && !meta.getGeneration().equals(Generation.COPY_OF_COPY);
-	}
+	
 	/**
 	 * Computes a MD5 hash from a given String of data
 	 * @param data - String data to compute

@@ -133,15 +133,22 @@ public class BankNoteCommandExecutor implements CommandExecutor, TabCompleter{
 	private void getItemFromBankNote(Player player, int amount) {
 		PlayerInventory inventory = player.getInventory();
 		ItemStack heldItem = inventory.getItemInMainHand();
-
+		
 		if(heldItem.getItemMeta() instanceof BookMeta) {
 			BookMeta meta = (BookMeta) heldItem.getItemMeta();
-			if(CryptoSecure.isBankNote(meta)) {
-				List<String> data = meta.getPages();
-				ItemStack decode = CryptoSecure.decodeItemStack(data);
+			if(BankNote.isBankNote(meta)) {
+				BankNote note = new BankNote(meta);
+				ItemStack items = note.exchangeItems(amount);
 				
-				if(decode != null) {
-					inventory.addItem(decode);
+				if(items != null) {
+					if(note.isEmpty()) {
+						inventory.remove(heldItem);
+					}
+					else {
+						inventory.setItemInMainHand(note.newUpdatedBook());
+					}
+					
+					inventory.addItem(items);
 				}
 			}
 		}

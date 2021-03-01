@@ -1,5 +1,5 @@
 name: BankNote
-main: com.ruinscraft.banknote.BankNote
+main: com.ruinscraft.banknote.BankNotePlugin
 version: 0.1
 author: Ruinscraft LLC
 api-version: 1.13
