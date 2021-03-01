@@ -4,7 +4,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 
-public class BankNote extends JavaPlugin {
+public class BankNotePlugin extends JavaPlugin {
 	private FileConfiguration config = getConfig();
 	private BankNoteListener listener;
 

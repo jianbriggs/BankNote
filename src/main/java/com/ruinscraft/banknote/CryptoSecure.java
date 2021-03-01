@@ -14,34 +14,21 @@ import org.bukkit.Bukkit;
 import org.bukkit.block.Chest;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.inventory.meta.BookMeta.Generation;
 import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
+
+import net.md_5.bungee.api.ChatColor;
 
 public class CryptoSecure {
 	private static final int MAX_LENGTH = 240;
 	private static final String ENCODE_DELIMITTER = "!";
 	
-	/**
-	 * Computes and returns a hashed checksum of a given chest's items
-	 * @param c Chest to inspect
-	 * @return String representing hash value, or null on failure
-	 */
-	public static String hashChest(Chest c) {
-		Inventory inv = c.getInventory();
-		String temp = "";
-		for(int i = 0; i < inv.getSize(); i++) {
-			ItemStack is = inv.getItem(i);
-			if(is != null) {
-				temp += i + ":" + is.getType().name().charAt(0) + ":" + is.getAmount() + "$";
-			}
-		}
-		// TODO: debug
-		Bukkit.getLogger().info("(Debug) Chest checksum is " + temp);
-		Bukkit.getLogger().info("(Debug) Chest hash is " + hash(temp));
-		////
-		return hash(temp);
+	public static boolean isBankNote(BookMeta meta) {
+		// TODO: write algorithm to check more things besides pages
+		return meta.hasPages() && !meta.getGeneration().equals(Generation.COPY_OF_ORIGINAL) && !meta.getGeneration().equals(Generation.COPY_OF_COPY);
 	}
-	
 	/**
 	 * Computes a MD5 hash from a given String of data
 	 * @param data - String data to compute

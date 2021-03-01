@@ -49,9 +49,9 @@ import org.bukkit.scoreboard.Scoreboard;
 import net.md_5.bungee.api.ChatColor;
 
 public class BankNoteListener implements Listener{
-	private BankNote plugin;
+	private BankNotePlugin plugin;
 	
-    public BankNoteListener(BankNote plugin) {
+    public BankNoteListener(BankNotePlugin plugin) {
     	this.plugin = plugin;
     }
     

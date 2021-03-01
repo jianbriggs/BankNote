@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.inventory.meta.BookMeta.Generation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,14 +21,12 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class BankNoteCommandExecutor implements CommandExecutor, TabCompleter{
-	private final BankNote plugin;
+	private final BankNotePlugin plugin;
 	
 	private final List<String> tabOptions;
 	private final List<String> adminTabOptions;
 
-	private final String PLUGIN_BANNER = "" + ChatColor.GOLD + "--------------[ BankNote ]--------------";
-	
-	public BankNoteCommandExecutor(BankNote plugin) {
+	public BankNoteCommandExecutor(BankNotePlugin plugin) {
 		this.plugin = plugin;
 		this.tabOptions = new ArrayList<String>();
 		this.adminTabOptions = new ArrayList<String>();
@@ -92,7 +91,7 @@ public class BankNoteCommandExecutor implements CommandExecutor, TabCompleter{
 		};
 			
 		if(player.isOnline()) {
-			player.sendMessage(this.PLUGIN_BANNER);
+			player.sendMessage(DataSource.PLUGIN_BANNER);
 			player.sendMessage(commandHelpBase);
 			
 			if(player.hasPermission("dukesmart.shop.admin")) {
@@ -112,12 +111,19 @@ public class BankNoteCommandExecutor implements CommandExecutor, TabCompleter{
 		
 		ItemStack holder = new ItemStack(Material.WRITTEN_BOOK);
 		BookMeta meta = (BookMeta) holder.getItemMeta();
-		meta.setAuthor("WATCHBOX");
-		meta.setTitle("(Placeholder)");
+		
+		List<String> lore = new ArrayList<String>();
+		lore.add(DataSource.BANKNOTE_LORE_COLOR + "QTY: " + ChatColor.WHITE + heldItem.getAmount());
+		
+		meta.setGeneration(Generation.TATTERED);
+		meta.setAuthor(DataSource.BANKNOTE_AUTHOR);
+		meta.setLore(lore);
+		meta.setTitle("" + ChatColor.YELLOW + heldItem.getType());
 		meta.setPages(data);
 		holder.setItemMeta(meta);
 		
-		inventory.addItem(holder);
+		//inventory.addItem();
+		inventory.setItemInMainHand(holder);
 	}
 	
 	/**
@@ -130,7 +136,7 @@ public class BankNoteCommandExecutor implements CommandExecutor, TabCompleter{
 
 		if(heldItem.getItemMeta() instanceof BookMeta) {
 			BookMeta meta = (BookMeta) heldItem.getItemMeta();
-			if(meta.hasPages()) {
+			if(CryptoSecure.isBankNote(meta)) {
 				List<String> data = meta.getPages();
 				ItemStack decode = CryptoSecure.decodeItemStack(data);
 				
