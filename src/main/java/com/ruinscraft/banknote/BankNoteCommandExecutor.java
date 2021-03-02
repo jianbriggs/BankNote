@@ -30,6 +30,10 @@ public class BankNoteCommandExecutor implements CommandExecutor, TabCompleter{
 		this.plugin = plugin;
 		this.tabOptions = new ArrayList<String>();
 		this.adminTabOptions = new ArrayList<String>();
+		
+		tabOptions.add("create");
+		tabOptions.add("exchange");
+		tabOptions.add("merge");
 	}
 	
 	@Override

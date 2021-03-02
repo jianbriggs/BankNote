@@ -25,8 +25,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
@@ -71,6 +73,29 @@ public class BankNoteListener implements Listener{
 
         if (evt.getAction() == Action.RIGHT_CLICK_BLOCK) {
         }
+    }
+    
+    @EventHandler
+    public void onPlayerPickupItem(EntityPickupItemEvent evt) {
+    	if(evt.getEntity() instanceof Player) {
+    		Player player = (Player) evt.getEntity();
+    		PlayerInventory inventory = player.getInventory();
+    		ItemStack item = evt.getItem().getItemStack();
+    		for(Integer slot : inventory.all(Material.WRITTEN_BOOK).keySet()) {
+    			ItemStack temp = inventory.getItem(slot);
+    			BookMeta meta = (BookMeta) temp.getItemMeta();
+    			if(BankNote.isBankNote(meta)) {
+    				String title = ChatColor.stripColor(meta.getTitle());
+    				if(title.equalsIgnoreCase(item.getType().name())) {
+    					BankNote note = new BankNote(meta);
+    					note.add(item.getAmount());
+    					inventory.setItem(slot, note.newUpdatedBook());
+    					evt.getItem().remove();
+    					evt.setCancelled(true);
+    				}
+    			}
+    		}
+    	}
     }
     
     private String getItemDisplayName(ItemStack item) {

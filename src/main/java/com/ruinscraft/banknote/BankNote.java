@@ -22,6 +22,10 @@ public class BankNote {
 		this.quantity = getQuantityFromMeta();
 	}
 	
+	public void add(int amount) {
+		this.quantity += amount;
+	}
+	
 	public ItemStack exchangeItems(int amount) {
 		if(quantity >= amount) {
 			quantity -= amount;
