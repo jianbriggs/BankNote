@@ -71,7 +71,20 @@ public class BankNoteListener implements Listener{
     public void onPlayerInteract(PlayerInteractEvent evt) {
         Player player = evt.getPlayer();
 
-        if (evt.getAction() == Action.RIGHT_CLICK_BLOCK) {
+        if (evt.getAction() == Action.RIGHT_CLICK_AIR || evt.getAction() == Action.RIGHT_CLICK_BLOCK) {
+        	PlayerInventory inventory = player.getInventory();
+        	
+        	ItemStack item = inventory.getItemInMainHand();
+        	
+        	if(itemIsFinishedBook(item)) {
+        		BookMeta meta = (BookMeta) item.getItemMeta();
+        		
+        		if(BankNote.isBankNote(meta)) {
+        			player.sendMessage("(Debug) Item in hand is a bank note");
+        			// TODO: display Bank Note metadata in chat
+        			//evt.setCancelled(true);
+        		}
+        	}
         }
     }
     

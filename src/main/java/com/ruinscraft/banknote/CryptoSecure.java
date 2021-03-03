@@ -25,7 +25,6 @@ public class CryptoSecure {
 	private static final int MAX_LENGTH = 240;
 	private static final String ENCODE_DELIMITTER = "!";
 	
-	
 	/**
 	 * Computes a MD5 hash from a given String of data
 	 * @param data - String data to compute

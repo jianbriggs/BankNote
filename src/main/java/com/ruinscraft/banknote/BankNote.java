@@ -2,24 +2,56 @@ package com.ruinscraft.banknote;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.BookMeta.Generation;
 
+import com.google.gson.Gson;
+
 import net.md_5.bungee.api.ChatColor;
 
 public class BankNote {
-	private BookMeta meta;
+	private final static String MAGIC = "$19890504$";
+	private String id;
+	private UUID creator;
 	private ItemStack item;
 	private int quantity;
+	private boolean debug;
+	
+	public BankNote(Player player, ItemStack item) {
+		this.id = generateHash(player, item);
+		this.creator = player.getUniqueId();
+		this.item = item;
+		this.quantity = item.getAmount();
+		this.debug = false;
+	}
+	
+	public BankNote(Player player, ItemStack item, boolean debug) {
+		this.id = generateHash(player, item);
+		this.creator = player.getUniqueId();
+		this.item = item;
+		this.quantity = item.getAmount();
+		this.debug = debug;
+	}
 	
 	public BankNote(BookMeta meta) {
-		this.meta = meta;
-		this.item = CryptoSecure.decodeItemStack(meta.getPages());
-		this.quantity = getQuantityFromMeta();
+		if(meta.hasPages() && meta.getPageCount() > 0) {
+			List<String> pages = meta.getPages();
+			String bankNoteMeta = pages.get(0);
+			if(pageIsMeta(bankNoteMeta)) {
+				setMeta(bankNoteMeta);
+				this.item = CryptoSecure.decodeItemStack(pages.subList(1, pages.size()));
+			}
+		}
+	}
+	
+	private String generateHash(Player player, ItemStack item) {
+		return CryptoSecure.hash(CryptoSecure.hash(player.getUniqueId().toString()) + CryptoSecure.hash(CryptoSecure.itemStackToBase64(item))); 
 	}
 	
 	public void add(int amount) {
@@ -40,13 +72,6 @@ public class BankNote {
 		return this.quantity;
 	}
 	
-	private int getQuantityFromMeta() {
-		List<String> lore = this.meta.getLore();
-		String qtyLine = ChatColor.stripColor(lore.get(0));
-		String[] tokens = qtyLine.split(":");
-		return Integer.parseInt(tokens[1].strip());
-	}
-	
 	public boolean isEmpty() {
 		return quantity == 0;
 	}
@@ -62,19 +87,44 @@ public class BankNote {
 	 */
 	public ItemStack newUpdatedBook() {
 		ItemStack newBook = new ItemStack(Material.WRITTEN_BOOK);
-
-		List<String> data = CryptoSecure.encodeItemStack(this.item);
+		BookMeta bookMeta = (BookMeta) newBook.getItemMeta();
 		
+		List<String> data = new ArrayList<String>();
+		data.add(metaToString());
+		data.addAll(CryptoSecure.encodeItemStack(this.item));
 		List<String> lore = new ArrayList<String>();
 		lore.add(DataSource.BANKNOTE_LORE_COLOR + "QTY: " + ChatColor.WHITE + this.quantity);
 		
-		meta.setGeneration(Generation.TATTERED);
-		meta.setAuthor(DataSource.BANKNOTE_AUTHOR);
-		meta.setLore(lore);
-		meta.setTitle("" + ChatColor.YELLOW + this.item.getType());
-		meta.setPages(data);
-		newBook.setItemMeta(meta);
+		bookMeta.setGeneration(Generation.TATTERED);
+		bookMeta.setAuthor(DataSource.BANKNOTE_AUTHOR);
+		bookMeta.setLore(lore);
+		bookMeta.setTitle("" + ChatColor.YELLOW + this.item.getType());
+		bookMeta.setPages(data);
+		newBook.setItemMeta(bookMeta);
 		
 		return newBook;
+	}
+	
+	private static boolean pageIsMeta(String s) {
+		String[] tokens = s.split(";");
+		if(tokens.length > 0) {
+			return tokens.length == 6 && tokens[0].equals(MAGIC);
+		}
+		
+		return false;
+	}
+	
+	private String metaToString() {
+		return MAGIC + ";" + this.id + ";" + this.creator.toString() + ";" + this.item.getType() + ";" + this.quantity + ";" + this.debug;
+	}
+	
+	private void setMeta(String s) {
+		String[] tokens = s.split(";");
+		if(tokens.length > 0) {
+			this.id = tokens[1];
+			this.creator = UUID.fromString(tokens[2]);
+			this.quantity = Integer.parseInt(tokens[4]);
+			this.debug = Boolean.parseBoolean(tokens[5]);
+		}
 	}
 }

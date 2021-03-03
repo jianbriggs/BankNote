@@ -83,9 +83,9 @@ public class BankNoteCommandExecutor implements CommandExecutor, TabCompleter{
 	
 	private void showHelp(Player player) {
 		String[] commandHelpBase = {
-			ChatColor.DARK_AQUA + "  /shop" + ChatColor.AQUA + " withdraw ($)" + ChatColor.GRAY + ": Removes money from your ledger",
-			ChatColor.DARK_AQUA + "  /shop" + ChatColor.AQUA + " balance" + ChatColor.GRAY + ": Check your ledger balance",
-			ChatColor.DARK_AQUA + "  /shop" + ChatColor.AQUA + " top" + ChatColor.GRAY + ": View top 10 earners"
+			ChatColor.DARK_AQUA + "  /banknote" + ChatColor.AQUA + " create" + ChatColor.GRAY + ": Create a new Bank Note from an item stack",
+			ChatColor.DARK_AQUA + "  /banknote" + ChatColor.AQUA + " exchange (amount)" + ChatColor.GRAY + ": Exchange a Bank Note balance for an item",
+			ChatColor.DARK_AQUA + "  /banknote" + ChatColor.AQUA + " merge" + ChatColor.GRAY + ": Combine two like Bank Notes"
 		};
 		
 		String[] commandHelpAdmin = {
@@ -111,23 +111,10 @@ public class BankNoteCommandExecutor implements CommandExecutor, TabCompleter{
 	private void convertItemToBankNote(Player player) {
 		PlayerInventory inventory = player.getInventory();
 		ItemStack heldItem = inventory.getItemInMainHand();
-		List<String> data = CryptoSecure.encodeItemStack(heldItem);
 		
-		ItemStack holder = new ItemStack(Material.WRITTEN_BOOK);
-		BookMeta meta = (BookMeta) holder.getItemMeta();
-		
-		List<String> lore = new ArrayList<String>();
-		lore.add(DataSource.BANKNOTE_LORE_COLOR + "QTY: " + ChatColor.WHITE + heldItem.getAmount());
-		
-		meta.setGeneration(Generation.TATTERED);
-		meta.setAuthor(DataSource.BANKNOTE_AUTHOR);
-		meta.setLore(lore);
-		meta.setTitle("" + ChatColor.YELLOW + heldItem.getType());
-		meta.setPages(data);
-		holder.setItemMeta(meta);
-		
-		//inventory.addItem();
-		inventory.setItemInMainHand(holder);
+		BankNote bankNote = new BankNote(player, heldItem);
+
+		inventory.setItemInMainHand(bankNote.newUpdatedBook());
 	}
 	
 	/**
