@@ -78,9 +78,15 @@ public class BankNote {
 	
 	public static boolean isBankNote(BookMeta meta) {
 		// TODO: write algorithm to check more things besides pages
-		return meta.hasPages() && !meta.getGeneration().equals(Generation.COPY_OF_ORIGINAL) && !meta.getGeneration().equals(Generation.COPY_OF_COPY);
+		return meta.hasPages()
+				&& !meta.getGeneration().equals(Generation.COPY_OF_ORIGINAL)
+				&& !meta.getGeneration().equals(Generation.COPY_OF_COPY)
+				&& pageIsMeta(meta.getPage(1));
 	}
 	
+	public static boolean isSigned(BookMeta meta) {
+		return meta.getAuthor().equals(DataSource.BANKNOTE_AUTHOR) && meta.hasLore();
+	}
 	/**
 	 * Generates a new Book item from the BankNote information
 	 * @return

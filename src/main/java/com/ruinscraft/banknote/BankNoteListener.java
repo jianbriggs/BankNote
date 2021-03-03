@@ -80,9 +80,20 @@ public class BankNoteListener implements Listener{
         		BookMeta meta = (BookMeta) item.getItemMeta();
         		
         		if(BankNote.isBankNote(meta)) {
-        			player.sendMessage("(Debug) Item in hand is a bank note");
-        			// TODO: display Bank Note metadata in chat
-        			//evt.setCancelled(true);
+        			if(BankNote.isSigned(meta)) {
+        				// TODO: debug
+        				player.sendMessage("(Debug) Item in hand is a bank note");
+        				
+        				for(String s : meta.getPages()) {
+        					Bukkit.getLogger().info(s);
+        				}
+        				////
+        				// TODO: display Bank Note metadata in chat
+        				evt.setCancelled(true);
+        			}
+        			else {
+        				player.sendMessage("(Debug) Item looks like a bank note, but is not signed");
+        			}
         		}
         	}
         }

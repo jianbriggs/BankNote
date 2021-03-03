@@ -127,7 +127,7 @@ public class BankNoteCommandExecutor implements CommandExecutor, TabCompleter{
 		
 		if(heldItem.getItemMeta() instanceof BookMeta) {
 			BookMeta meta = (BookMeta) heldItem.getItemMeta();
-			if(BankNote.isBankNote(meta)) {
+			if(BankNote.isBankNote(meta) && BankNote.isSigned(meta)) {
 				BankNote note = new BankNote(meta);
 				ItemStack items = note.exchangeItems(amount);
 				
