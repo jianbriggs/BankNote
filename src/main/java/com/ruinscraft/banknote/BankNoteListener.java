@@ -71,7 +71,7 @@ public class BankNoteListener implements Listener{
     public void onPlayerInteract(PlayerInteractEvent evt) {
         Player player = evt.getPlayer();
 
-        if (evt.getAction() == Action.RIGHT_CLICK_AIR || evt.getAction() == Action.RIGHT_CLICK_BLOCK) {
+        if (evt.getAction() == Action.RIGHT_CLICK_AIR|| evt.getAction() == Action.RIGHT_CLICK_BLOCK) {
         	PlayerInventory inventory = player.getInventory();
         	
         	ItemStack item = inventory.getItemInMainHand();
@@ -79,21 +79,9 @@ public class BankNoteListener implements Listener{
         	if(itemIsFinishedBook(item)) {
         		BookMeta meta = (BookMeta) item.getItemMeta();
         		
-        		if(BankNote.isBankNote(meta)) {
-        			if(BankNote.isSigned(meta)) {
-        				// TODO: debug
-        				player.sendMessage("(Debug) Item in hand is a bank note");
-        				
-        				for(String s : meta.getPages()) {
-        					Bukkit.getLogger().info(s);
-        				}
-        				////
-        				// TODO: display Bank Note metadata in chat
-        				evt.setCancelled(true);
-        			}
-        			else {
-        				player.sendMessage("(Debug) Item looks like a bank note, but is not signed");
-        			}
+        		if(BankNote.isBankNote(meta) && BankNote.isSigned(meta)) {
+    				displayBankNoteMeta(player, meta);
+    				evt.setCancelled(true);
         		}
         	}
         }
@@ -110,18 +98,44 @@ public class BankNoteListener implements Listener{
     			BookMeta meta = (BookMeta) temp.getItemMeta();
     			if(BankNote.isBankNote(meta)) {
     				String title = ChatColor.stripColor(meta.getTitle());
-    				if(title.equalsIgnoreCase(item.getType().name())) {
+    				if(title.equalsIgnoreCase(prettyPrint(item.getType().name()))) {
     					BankNote note = new BankNote(meta);
-    					note.add(item.getAmount());
-    					inventory.setItem(slot, note.newUpdatedBook());
-    					evt.getItem().remove();
-    					evt.setCancelled(true);
+    					if(note.itemEquals(item)) {
+	    					note.add(item.getAmount());
+	    					inventory.setItem(slot, note.newUpdatedBook());
+	    					evt.getItem().remove();
+	    					evt.setCancelled(true);
+    					}
     				}
     			}
     		}
     	}
     }
     
+    private void displayBankNoteMeta(Player player, BookMeta meta) {
+    	if(player.isOnline()) {
+    		BankNote bankNote = new BankNote(meta);
+    		List<String> messages = new ArrayList<String>();
+    		messages.add(DataSource.PLUGIN_BANNER);
+    		messages.add(ChatColor.WHITE + "Item: " + ChatColor.GRAY + prettyPrint(bankNote.getItem().getType().name()));
+    		messages.add(ChatColor.WHITE + "Quantity: " + ChatColor.GRAY + bankNote.getQuantity());
+    		if(player.hasPermission("banknote.developer.meta")) {
+    			messages.add(ChatColor.WHITE + "BN ID: " + ChatColor.GRAY + bankNote.getId());
+    			messages.add(ChatColor.WHITE + "Creator: " + ChatColor.GRAY + Bukkit.getOfflinePlayer(bankNote.getCreator()).getName());
+    			messages.add(ChatColor.WHITE + "Timestamp: " + ChatColor.GRAY + bankNote.getFormattedDate() + " (" + bankNote.getTimestamp() + ")");
+    			messages.add(ChatColor.WHITE + "Secret: " + ChatColor.GRAY + this.plugin.getSecret());
+    		}
+    		
+    		for(String s : messages) {
+    			player.sendMessage(s);
+    		}
+    		
+    		// TODO: debug
+    		Bukkit.getLogger().info(bankNote.metaToString());
+    		Bukkit.getLogger().info(CryptoSecure.itemStackToBase64(bankNote.getItem()));
+    		////
+    	}
+    }
     private String getItemDisplayName(ItemStack item) {
     	ItemMeta meta = item.getItemMeta();
     	Material mat = item.getType();

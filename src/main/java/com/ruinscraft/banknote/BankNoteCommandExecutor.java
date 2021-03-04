@@ -52,7 +52,7 @@ public class BankNoteCommandExecutor implements CommandExecutor, TabCompleter{
 				case "exchange":
 					// TODO: setup cmd handling for quantity
 					int amount = 1;
-					getItemFromBankNote(player, amount);
+					convertBankNoteToItem(player, amount);
 					break;
 				default:
 					showHelp(player);
@@ -98,7 +98,7 @@ public class BankNoteCommandExecutor implements CommandExecutor, TabCompleter{
 			player.sendMessage(DataSource.PLUGIN_BANNER);
 			player.sendMessage(commandHelpBase);
 			
-			if(player.hasPermission("dukesmart.shop.admin")) {
+			if(player.hasPermission("banknote.developer")) {
 				player.sendMessage(commandHelpAdmin);
 			}
 		}
@@ -112,39 +112,55 @@ public class BankNoteCommandExecutor implements CommandExecutor, TabCompleter{
 		PlayerInventory inventory = player.getInventory();
 		ItemStack heldItem = inventory.getItemInMainHand();
 		
-		BankNote bankNote = new BankNote(player, heldItem);
-
-		inventory.setItemInMainHand(bankNote.newUpdatedBook());
+		if(heldItem != null && !heldItem.getType().equals(Material.AIR)) {
+			BankNote bankNote = new BankNote(player, heldItem, this.plugin.getConfig().getString("values.secret"));
+	
+			inventory.setItemInMainHand(bankNote.newUpdatedBook());
+		}
+		else {
+			if(player.isOnline()) {
+				player.sendMessage(DataSource.CREATE_NO_ITEM);
+			}
+		}
 	}
 	
 	/**
 	 * Experimental - decodes/deserializes an ItemStack from Book string
 	 * @param player
 	 */
-	private void getItemFromBankNote(Player player, int amount) {
+	private void convertBankNoteToItem(Player player, int amount) {
 		PlayerInventory inventory = player.getInventory();
 		ItemStack heldItem = inventory.getItemInMainHand();
 		
 		if(heldItem.getItemMeta() instanceof BookMeta) {
 			BookMeta meta = (BookMeta) heldItem.getItemMeta();
-			if(BankNote.isBankNote(meta) && BankNote.isSigned(meta)) {
+			if(BankNote.isBankNote(meta)) {
 				BankNote note = new BankNote(meta);
-				ItemStack items = note.exchangeItems(amount);
-				
-				if(items != null) {
-					if(note.isEmpty()) {
-						inventory.remove(heldItem);
-					}
-					else {
-						inventory.setItemInMainHand(note.newUpdatedBook());
-					}
+				if(BankNote.isSigned(meta) || player.hasPermission("banknote.developer.verify")) {
+					ItemStack items = note.exchangeItems(amount);
 					
-					inventory.addItem(items);
+					if(items != null) {
+						if(note.isEmpty()) {
+							inventory.remove(heldItem);
+						}
+						else {
+							inventory.setItemInMainHand(note.newUpdatedBook());
+						}
+						
+						inventory.addItem(items);
+					}
+				}
+				else {
+					if(player.isOnline()) {
+						player.sendMessage(DataSource.INVALID_BANKNOTE);
+					}
 				}
 			}
 		}
 		else {
-			return;
+			if(player.isOnline()) {
+				player.sendMessage(DataSource.NOT_A_BANKNOTE);
+			}
 		}
 	}
 	/**

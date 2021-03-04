@@ -9,3 +9,6 @@ banknote.general
 
 Helper, Mod, & Admin
 --------------------
+banknote.developer - General purpose developer permissions
+banknote.developer.meta - Display more detailed information on right-click
+banknote.developer.verify - Verify the authenticity of a book

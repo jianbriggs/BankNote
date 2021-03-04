@@ -1,42 +1,46 @@
 package com.ruinscraft.banknote;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.BookMeta.Generation;
-
-import com.google.gson.Gson;
 
 import net.md_5.bungee.api.ChatColor;
 
 public class BankNote {
-	private final static String MAGIC = "$19890504$";
+	private final static String MAGIC = "$29A$";
+	private final static String TIME_VERIFY = "9a781a6610a73c2b691f5653a945d4bd";
 	private String id;
 	private UUID creator;
 	private ItemStack item;
+	private long timestamp;
 	private int quantity;
 	private boolean debug;
 	
-	public BankNote(Player player, ItemStack item) {
-		this.id = generateHash(player, item);
+	public BankNote(Player player, ItemStack item, String secret) {
 		this.creator = player.getUniqueId();
 		this.item = item;
+		this.timestamp = System.currentTimeMillis();
 		this.quantity = item.getAmount();
 		this.debug = false;
+		this.id = generateHash(secret);
 	}
 	
-	public BankNote(Player player, ItemStack item, boolean debug) {
-		this.id = generateHash(player, item);
+	public BankNote(Player player, ItemStack item, String secret, boolean debug) {
 		this.creator = player.getUniqueId();
 		this.item = item;
+		this.timestamp = System.currentTimeMillis();
 		this.quantity = item.getAmount();
 		this.debug = debug;
+		this.id = generateHash(secret);
 	}
 	
 	public BankNote(BookMeta meta) {
@@ -50,8 +54,37 @@ public class BankNote {
 		}
 	}
 	
-	private String generateHash(Player player, ItemStack item) {
-		return CryptoSecure.hash(CryptoSecure.hash(player.getUniqueId().toString()) + CryptoSecure.hash(CryptoSecure.itemStackToBase64(item))); 
+	public String getId() {
+		return this.id;
+	}
+	
+	public void setId(String id) {
+		this.id = id;
+	}
+	
+	public void newId(String secret) {
+		this.id = generateHash(secret);
+	}
+
+	private String generateHash(String secret) {
+		return CryptoSecure.hash(this.creator.toString() + this.timestamp + secret + CryptoSecure.itemStackToBase64(this.item)); 
+	}
+	
+	public static String generateHash(Player player, ItemStack item, String secret) {
+		return CryptoSecure.hash(player.getUniqueId().toString() + System.currentTimeMillis() + secret + CryptoSecure.itemStackToBase64(item)); 
+	}
+	
+	public boolean verifyHash(String secret) {
+		String hash = generateHash(secret);
+		return hash.equals(this.id);
+	}
+	
+	public String timehash() {
+		return CryptoSecure.hash("" + this.timestamp);
+	}
+	
+	public boolean securityCheck() {
+		return timehash().equalsIgnoreCase(TIME_VERIFY);
 	}
 	
 	public void add(int amount) {
@@ -59,7 +92,7 @@ public class BankNote {
 	}
 	
 	public ItemStack exchangeItems(int amount) {
-		if(quantity >= amount) {
+		if(quantity > 0 && quantity >= amount) {
 			quantity -= amount;
 			ItemStack items = this.item.clone();
 			items.setAmount(amount);
@@ -68,8 +101,48 @@ public class BankNote {
 		else return null;
 	}
 	
+	public void setQuantity(int amount) {
+		if(amount >= Integer.MAX_VALUE) {
+			this.quantity = Integer.MAX_VALUE - 1;
+		}
+		else {
+			this.quantity = amount;
+		}
+	}
+	
 	public int getQuantity() {
 		return this.quantity;
+	}
+	
+	public ItemStack getItem() {
+		return this.item;
+	}
+	
+	public void setItem(ItemStack item) {
+		this.item = item;
+	}
+	
+	/**
+	 * Compares the Bank Note item to another item, ignoring amounts
+	 * @param item
+	 * @return
+	 */
+	public boolean itemEquals(ItemStack item) {
+		return this.item.getItemMeta().equals(item.getItemMeta()) && this.item.getType().equals(item.getType());
+	}
+	
+	public UUID getCreator() {
+		return this.creator;
+	}
+	
+	public long getTimestamp() {
+		return this.timestamp;
+	}
+	
+	public String getFormattedDate() {
+		Date date = new Date(this.timestamp);
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");  
+		return dateFormat.format(date);  
 	}
 	
 	public boolean isEmpty() {
@@ -77,15 +150,11 @@ public class BankNote {
 	}
 	
 	public static boolean isBankNote(BookMeta meta) {
-		// TODO: write algorithm to check more things besides pages
-		return meta.hasPages()
-				&& !meta.getGeneration().equals(Generation.COPY_OF_ORIGINAL)
-				&& !meta.getGeneration().equals(Generation.COPY_OF_COPY)
-				&& pageIsMeta(meta.getPage(1));
+		return meta.hasPages() && pageIsMeta(meta.getPage(1)) && meta.getPageCount() > 1;
 	}
 	
 	public static boolean isSigned(BookMeta meta) {
-		return meta.getAuthor().equals(DataSource.BANKNOTE_AUTHOR) && meta.hasLore();
+		return meta.getGeneration().equals(Generation.TATTERED) && meta.getAuthor().equals(DataSource.BANKNOTE_AUTHOR) && meta.hasLore();
 	}
 	/**
 	 * Generates a new Book item from the BankNote information
@@ -99,7 +168,20 @@ public class BankNote {
 		data.add(metaToString());
 		data.addAll(CryptoSecure.encodeItemStack(this.item));
 		List<String> lore = new ArrayList<String>();
-		lore.add(DataSource.BANKNOTE_LORE_COLOR + "QTY: " + ChatColor.WHITE + this.quantity);
+		
+		String quantityLore = DataSource.BANKNOTE_LORE_COLOR + "QTY: ";
+		
+		if(this.quantity >= 1000000.0) {
+			quantityLore += ChatColor.AQUA + String.format("%.1fm", (double)(this.quantity / 1000000.0));
+		}
+		else if(this.quantity >= 10000) {
+			quantityLore += ChatColor.WHITE + String.format("%.1fk", (double)(this.quantity / 1000.0));
+		}
+		else {
+			quantityLore += ChatColor.YELLOW + "" + this.quantity;
+		}
+		
+		lore.add(quantityLore);
 		
 		bookMeta.setGeneration(Generation.TATTERED);
 		bookMeta.setAuthor(DataSource.BANKNOTE_AUTHOR);
@@ -111,17 +193,17 @@ public class BankNote {
 		return newBook;
 	}
 	
-	private static boolean pageIsMeta(String s) {
+	public static boolean pageIsMeta(String s) {
 		String[] tokens = s.split(";");
 		if(tokens.length > 0) {
-			return tokens.length == 6 && tokens[0].equals(MAGIC);
+			return tokens.length == 7 && tokens[0].equals(MAGIC);
 		}
 		
 		return false;
 	}
 	
-	private String metaToString() {
-		return MAGIC + ";" + this.id + ";" + this.creator.toString() + ";" + this.item.getType() + ";" + this.quantity + ";" + this.debug;
+	public String metaToString() {
+		return MAGIC + ";" + this.id + ";" + this.creator.toString() + ";" + this.item.getType() + ";" + this.quantity + ";" + this.timestamp + ";" + this.debug;
 	}
 	
 	private void setMeta(String s) {
@@ -130,7 +212,8 @@ public class BankNote {
 			this.id = tokens[1];
 			this.creator = UUID.fromString(tokens[2]);
 			this.quantity = Integer.parseInt(tokens[4]);
-			this.debug = Boolean.parseBoolean(tokens[5]);
+			this.timestamp = Long.parseLong(tokens[5]);
+			this.debug = Boolean.parseBoolean(tokens[6]);
 		}
 	}
 }
